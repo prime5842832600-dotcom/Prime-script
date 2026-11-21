@@ -1,0 +1,83 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local whitelist = {
+    "prime_candyy4",
+    "prime_candyy5",
+}
+
+local function isWhitelisted(name)
+    for _, v in ipairs(whitelist) do
+        if v == name then return true end
+    end
+    return false
+end
+
+if not isWhitelisted(player.Name) then return end
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "NotificationGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+local messageLabel = Instance.new("TextLabel")
+messageLabel.Size = UDim2.new(0, 280, 0, 45)
+messageLabel.Position = UDim2.new(0.5, -140, 0.85, 0)
+messageLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+messageLabel.BackgroundTransparency = 0.25
+messageLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+messageLabel.TextSize = 20
+messageLabel.Font = Enum.Font.SourceSansBold
+messageLabel.Text = "Script Loaded!"
+messageLabel.Parent = screenGui
+
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(0, 8)
+uiCorner.Parent = messageLabel
+
+task.delay(3, function()
+    if screenGui then screenGui:Destroy() end
+end)
+
+local function isBottomFooter(uiElement)
+    if not uiElement:IsDescendantOf(playerGui) then return false end
+    local cam = workspace.CurrentCamera
+    local screenHeight = cam and cam.ViewportSize.Y or 0
+    if screenHeight > 0 then
+        if uiElement.AbsolutePosition.Y >= (screenHeight - 35) and uiElement.AbsoluteSize.Y <= 35 then
+            return true
+        end
+    end
+    return false
+end
+
+local function applyBlackMask(uiElement)
+    if uiElement:IsA("TextLabel") or uiElement:IsA("TextButton") or uiElement:IsA("TextBox") then
+        if uiElement == messageLabel then return end
+        local function updateMask()
+            if isBottomFooter(uiElement) then return end
+            local text = uiElement.Text
+            if text == "" then return end
+            local hasName = string.find(text, player.Name, 1, true) or string.find(text, player.DisplayName, 1, true)
+            if hasName then
+                uiElement.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+                uiElement.BackgroundTransparency = 0
+                uiElement.TextColor3 = Color3.fromRGB(0, 0, 0)
+                uiElement.TextStrokeTransparency = 1
+            end
+        end
+        updateMask()
+        uiElement:GetPropertyChangedSignal("Text"):Connect(updateMask)
+    end
+end
+
+for _, element in ipairs(playerGui:GetDescendants()) do
+    applyBlackMask(element)
+end
+for _, element in ipairs(workspace:GetDescendants()) do
+    applyBlackMask(element)
+end
+
+playerGui.DescendantAdded:Connect(applyBlackMask)
+workspace.DescendantAdded:Connect(applyBlackMask)
